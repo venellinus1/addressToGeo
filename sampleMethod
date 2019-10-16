@@ -1,0 +1,79 @@
+private void recheckGwithW()
+        {
+            WebClient wcgr = new WebClient();
+            wcgr.Encoding = Encoding.UTF8;
+            int count = 0;
+            foreach (string line in Lines)//addresses in text format one address per line. addresses are placed in Lines object
+            {
+
+                var values = line.Split(',');//address details are comma delimited
+
+                string urlGetAUs = "http://search-maps.wialon.com/hst-api.wialon.com/gis_searchintelli?phrase=" + values[2]+","+values[3] + "&count=20&uid=" + txtUID.Text + "&sid=" + txtEID.Text;
+               
+                string resultgr = (wcgr.DownloadString(urlGetAUs));
+
+                JavaScriptSerializer ser = new JavaScriptSerializer();
+                List<object> items = ser.Deserialize<List<object>>(resultgr);
+
+                bool addrisok = false;
+                foreach (object pair in items)
+                {
+                    Dictionary<string, object> geoin = new Dictionary<string, object>();
+                    geoin = (Dictionary<string, object>)pair;
+
+                    foreach (KeyValuePair<string, object> pair1 in geoin)
+                    {                        
+                        foreach (KeyValuePair<string, object> pair2 in geoin)
+                        {
+                            object[] details = (object[])pair2.Value;
+                            Dictionary<string, object> geoin1 = new Dictionary<string, object>();
+                            geoin1 = (Dictionary<string, object>)details[0];
+                            string location = "";
+                            string x = "";
+                            string y = "";
+                                                       
+                            foreach (KeyValuePair<string, object> pair3 in geoin1)
+                            {
+                                if (string.Compare(pair3.Key.ToString(), "x") == 0)//extract x from result
+                                {
+                                    x = pair3.Value.ToString();
+                                }
+
+                                if (string.Compare(pair3.Key.ToString(), "y") == 0)//extract y from result
+                                {                                   
+                                    y = pair3.Value.ToString();
+                                    //compare if the distance between the two coordinates falls within the defined precision 
+                                    if ((Math.Abs(float.Parse(x) - float.Parse(values[1])) < (float)numUpDownPrecision.Value) ||
+                                     (Math.Abs(float.Parse(y) - float.Parse(values[0])) < (float)numUpDownPrecision.Value))
+                                    {//break cycle - address is ok
+                                        addrisok = true;
+                                        break;
+                                    }
+                                }
+                                
+                            }
+                            if (addrisok)
+                            {//break cycle - address is ok
+                                break;
+                            }
+                          
+                        }
+                        if (addrisok)
+                        {//break cycle - address is ok
+                            break;
+                        }
+                    }
+                }
+                if (addrisok)
+                {
+                    //do some stuff if address is Ok
+                }
+                else
+                {
+                    //do some other stuff if address is Not Ok
+                }
+               
+                count++;
+                
+            }
+        }
